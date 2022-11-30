@@ -1,10 +1,4 @@
-
-
-
 title: "Stage structured models"
-
-runtime: shiny
-output: html_document
 ---
 
 April 2021
