@@ -1,5 +1,5 @@
 
-title: "Stage structured models "
+title: "Stage structured models"
 runtime: shiny
 output: html_document
 ---
