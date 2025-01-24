@@ -24,6 +24,9 @@ survparams <- function(nstages, age_transition, p_stage, h_stage){
     (nstages != length(h_stage)) 
   
   if(any(x)) stop("Number of stages and lengths of demographic parameters don't match")
+
+#Checks that age_transition, p_stage, and h_stage have the same length as nstages.
+If the lengths mismatch, the function stops and throws an error.
   
   P <- rep(NA, nstages)
   G <- rep(NA, nstages)
@@ -31,28 +34,47 @@ survparams <- function(nstages, age_transition, p_stage, h_stage){
   for (i in 1:nstages){
      
      p_natural_instant <- log(p_stage[i]) + log(1-h_stage[i])
+# Computes the instantaneous survival probability, considering natural survival and harvest rates.
      p_natural <- exp(p_natural_instant)
+# Converts the instantaneous survival back to a regular probability using the exponential function.
      if (i>1){
       years_in_stage <- age_transition[i] - age_transition[i-1]
      } else {
        years_in_stage <- age_transition[i]
      }
+# For stages after the first (i > 1), duration is the difference between the current and previous transition ages.
+For the first stage, duration is simply the first transition age.
+
      
      P[i] <- ((1-p_natural^(years_in_stage-1))/(1-p_natural^(years_in_stage)))*p_natural
+# P[i]: Proportion of individuals surviving within the current stage.
+Accounts for survival across multiple years, adjusting for the probability of dying during the stage.
+
      G[i] <- ((p_natural^(years_in_stage)) * (1-p_natural))/(1-p_natural^(years_in_stage))
+# G[i]: Proportion od individuals transitionating to the next stage.
+Accounts for the probability of surviving all years in the stage but not staying in the stage indefinitely, transitionating to the next one. 
+
   }
  return(data.frame(P = P, G = G))
+# Outputs a data frame containing the survival (P) and growth (G) values for all stages.
+
 }
 
 createA <- function(nstages, births, age_trans, p_s, h_s){
     x <- survparams(nstages, age_trans, p_s, h_s)
+# Calls survparams to compute survival (P) and growth (G) values for each stage.
+
     A <- diag(nstages)*0
+# Creates a square matrix (nstages x nstages) filled with zeros.
     A[1,] <- births
     diag(A) <- x$P
+# A[1, ]: Assigns birth rates to the first row.
+diag(A): Fills the diagonal with survival probabilities (P).
     irow <- 2:nstages
     icol <- 1:(nstages-1)
     rowcolind <- cbind(irow, icol)
     A[rowcolind] <- x$G[1:(nstages - 1)]
+# Assigns growth probabilities (G) to the subdiagonal of the matrix.
     colnames(A) <- paste("Age ", 1:nstages)
     A
 }
@@ -62,10 +84,14 @@ createA <- function(nstages, births, age_trans, p_s, h_s){
                     nrow = input$nstages, ncol = 3)
     xtemp[,1] <- asnum(input$stage_sizes)  
     xtemp
+# Creates a matrix xtemp with rows equal to nstages and 3 columns.
+Populates the first column with initial population sizes (stage_sizes), parsed using asnum.
   }
 
 asnum <- function(x){
   as.numeric(unlist(strsplit(x, ",")))
+# Converts a comma-separated string into a numeric vector.
+
 }
 
 leslie <- function(tmax, Ninit, A){
@@ -77,7 +103,7 @@ leslie <- function(tmax, Ninit, A){
     N[,t+1] <- A %*% N[,t]
   }
   N
-  
+  # Multiplies the Leslie matrix A by the current population vector to calculate the next population vector.
 }
 ```
 
